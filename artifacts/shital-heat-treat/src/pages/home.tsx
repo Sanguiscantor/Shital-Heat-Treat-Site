@@ -191,7 +191,7 @@ export default function Home() {
                 <SectionHeading subtitle="Who We Are">Industrial Expertise</SectionHeading>
                 <div className="prose prose-invert prose-lg">
                   <p className="text-gray-300 font-light leading-relaxed">
-                    <strong className="text-white font-semibold">Shital Heat Treat Pvt. Ltd.</strong> is a specialized provider of advanced heat treatment solutions, with core expertise in vacuum heat treatment technology. We are in partnership with Shital Vacuum Treat Pvt. Ltd. located in Bhosari.
+                    <strong className="text-white font-semibold">Shital Heat Treat Pvt. Ltd.</strong> is a specialized provider of advanced heat treatment solutions, with core expertise in vacuum heat treatment technology. We are in partnership with Shital Vacuum Treat Pvt. Ltd. located in Vasai.
                   </p>
                   <p className="text-gray-400 font-light leading-relaxed mt-6">
                     For 13 years, we have been a trusted company providing vacuum heat treatment, plasma ion nitriding, sub zero and cryogenic treatments for the most demanding engineering applications.
@@ -465,7 +465,7 @@ export default function Home() {
               <div className="flex flex-col items-center justify-center p-8 border border-[#1A202C] bg-[#0D111A] hover:border-[#F39200] hover:bg-[#F39200]/5 transition-all group cursor-default">
                 <MapPin className="w-8 h-8 text-[#F39200] mb-4 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-mono tracking-widest text-gray-500 uppercase mb-2">Location</span>
-                <span className="text-lg text-white font-medium">Bhosari, Pune (India)</span>
+                <span className="text-lg text-white font-medium">Vasai (India)</span>
               </div>
             </div>
           </div>
