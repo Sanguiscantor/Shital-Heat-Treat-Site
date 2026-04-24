@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "iQh1CBSsaTafUeh8JrfwK"
+uri = "file://artifacts/shital-heat-treat/src/assets/hero-furnace.png"
+type = "image"
+title = "Industrial vacuum furnace interior"
+
+[[generated]]
+id = "33mVvDk07ERue0mntdx4H"
+uri = "file://artifacts/shital-heat-treat/src/assets/gear-heat.png"
+type = "image"
+title = "Precision machined steel gear"
+
+[[generated]]
+id = "VzDPCwKF9-batO3H4BCrg"
+uri = "file://artifacts/shital-heat-treat/src/assets/mold-die.png"
+type = "image"
+title = "Steel mold die cavity"
