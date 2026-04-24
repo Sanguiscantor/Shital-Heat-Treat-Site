@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "iQh1CBSsaTafUeh8JrfwK"
@@ -18,3 +17,9 @@ id = "VzDPCwKF9-batO3H4BCrg"
 uri = "file://artifacts/shital-heat-treat/src/assets/mold-die.png"
 type = "image"
 title = "Steel mold die cavity"
+
+[[outputs]]
+id = "R44n1mWVUisJuufiqM4Zk"
+uri = "file://exports/shital-heat-treat.zip"
+type = "unspecified"
+title = "Shital Heat Treat — full source code (.zip)"
