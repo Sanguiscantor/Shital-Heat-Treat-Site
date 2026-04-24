@@ -9,16 +9,19 @@ import heroFurnaceUrl from "@/assets/hero-furnace.png";
 import gearHeatUrl from "@/assets/gear-heat.png";
 // @ts-ignore
 import moldDieUrl from "@/assets/mold-die.png";
+// @ts-ignore
+import shtLogoUrl from "@/assets/sht-logo.png";
 
 const Logo = () => (
   <div className="flex items-center gap-3">
-    <div className="relative flex items-center justify-center w-10 h-12 bg-[#CC0066] rounded-b-[20px] rounded-t-sm shadow-lg overflow-hidden shrink-0">
-      <span className="relative z-10 text-white font-bold text-lg tracking-tighter">SHT</span>
-      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#F39200] rounded-full blur-[3px] opacity-90"></div>
-    </div>
+    <img
+      src={shtLogoUrl}
+      alt="Shital Heat Treat Pvt. Ltd."
+      className="h-12 w-12 md:h-14 md:w-14 object-contain shrink-0"
+    />
     <div className="flex flex-col">
-      <span className="text-white font-bold text-lg leading-none tracking-wide font-sans">SHITAL</span>
-      <span className="text-[#F39200] font-semibold text-xs leading-none tracking-widest mt-1">HEAT TREAT</span>
+      <span className="text-white font-bold text-base md:text-lg leading-none tracking-wide font-sans">SHITAL</span>
+      <span className="text-[#F39200] font-semibold text-[10px] md:text-xs leading-none tracking-[0.2em] mt-1.5">HEAT TREAT PVT. LTD.</span>
     </div>
   </div>
 );

@@ -1,5 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
+// @ts-ignore
+import shtLogoUrl from "@/assets/sht-logo.png";
 
 export function Login() {
   return (
@@ -12,13 +14,11 @@ export function Login() {
       
       <div className="z-10 text-center max-w-md mx-auto px-6 py-12 bg-card/80 backdrop-blur border border-border">
         <div className="flex justify-center mb-8">
-          {/* Logo SHT */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-14 bg-accent rounded-b-[24px] rounded-t-sm flex items-center justify-center relative overflow-hidden shadow-lg shadow-accent/20">
-              <span className="text-white font-bold text-xl tracking-tighter z-10">SHT</span>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full blur-[4px] opacity-80"></div>
-            </div>
-          </div>
+          <img
+            src={shtLogoUrl}
+            alt="Shital Heat Treat Pvt. Ltd."
+            className="h-20 w-20 object-contain"
+          />
         </div>
         
         <h1 className="text-2xl font-bold text-foreground mb-4 font-sans tracking-tight">Client Portal</h1>
