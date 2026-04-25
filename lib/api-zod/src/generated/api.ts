@@ -14,3 +14,239 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Bootstrap initial admin account
+ */
+export const bootstrapAdminBodyPasswordMin = 8;
+
+export const BootstrapAdminBody = zod.object({
+  email: zod.string().email(),
+  password: zod.string().min(bootstrapAdminBodyPasswordMin),
+  fullName: zod.string(),
+});
+
+/**
+ * @summary Login with email and password
+ */
+export const LoginBody = zod.object({
+  email: zod.string().email(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  token: zod.string(),
+  user: zod.object({
+    id: zod.string().uuid(),
+    email: zod.string().email(),
+    fullName: zod.string(),
+    role: zod.enum(["admin", "operator", "viewer", "client"]),
+    customerId: zod.string().uuid().nullable(),
+  }),
+});
+
+/**
+ * @summary Get current authenticated user
+ */
+export const GetAuthMeResponse = zod.object({
+  id: zod.string().uuid(),
+  email: zod.string().email(),
+  fullName: zod.string(),
+  role: zod.enum(["admin", "operator", "viewer", "client"]),
+  customerId: zod.string().uuid().nullable(),
+});
+
+/**
+ * @summary Create a worker account
+ */
+export const registerWorkerBodyPasswordMin = 8;
+
+export const RegisterWorkerBody = zod.object({
+  email: zod.string().email(),
+  password: zod.string().min(registerWorkerBodyPasswordMin),
+  fullName: zod.string(),
+  role: zod.enum(["admin", "operator", "viewer"]),
+});
+
+/**
+ * @summary List customers
+ */
+export const ListCustomersResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      companyName: zod.string(),
+      contactName: zod.string().nullish(),
+      contactEmail: zod.string().email(),
+      contactPhone: zod.string().nullish(),
+      isActive: zod.boolean(),
+    }),
+  ),
+});
+
+/**
+ * @summary Create customer
+ */
+export const CreateCustomerBody = zod.object({
+  companyName: zod.string(),
+  contactName: zod.string().nullish(),
+  contactEmail: zod.string().email(),
+  contactPhone: zod.string().nullish(),
+});
+
+/**
+ * @summary Create material entry
+ */
+export const CreateMaterialBody = zod.object({
+  customerId: zod.string().uuid(),
+  materialCode: zod.string(),
+  description: zod.string(),
+  grade: zod.string().nullish(),
+});
+
+/**
+ * @summary List work orders (role scoped)
+ */
+export const listWorkOrdersQueryLimitMax = 100;
+
+export const ListWorkOrdersQueryParams = zod.object({
+  status: zod
+    .enum([
+      "received",
+      "queued",
+      "in_process",
+      "quality_check",
+      "completed",
+      "dispatched",
+      "on_hold",
+    ])
+    .optional(),
+  limit: zod.coerce.number().min(1).max(listWorkOrdersQueryLimitMax).optional(),
+});
+
+export const ListWorkOrdersResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      customerId: zod.string().uuid(),
+      materialId: zod.string().uuid(),
+      orderCode: zod.string(),
+      processType: zod.string(),
+      quantity: zod.number(),
+      status: zod.enum([
+        "received",
+        "queued",
+        "in_process",
+        "quality_check",
+        "completed",
+        "dispatched",
+        "on_hold",
+      ]),
+      dueDate: zod.coerce.date().nullable(),
+      notes: zod.string().nullable(),
+    }),
+  ),
+});
+
+/**
+ * @summary Create a work order
+ */
+export const CreateWorkOrderBody = zod.object({
+  customerId: zod.string().uuid(),
+  materialId: zod.string().uuid(),
+  orderCode: zod.string(),
+  processType: zod.string(),
+  quantity: zod.number(),
+  status: zod
+    .enum([
+      "received",
+      "queued",
+      "in_process",
+      "quality_check",
+      "completed",
+      "dispatched",
+      "on_hold",
+    ])
+    .optional(),
+  dueDate: zod.coerce.date().nullish(),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Update work order status
+ */
+export const UpdateWorkOrderStatusParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const UpdateWorkOrderStatusBody = zod.object({
+  status: zod.enum([
+    "received",
+    "queued",
+    "in_process",
+    "quality_check",
+    "completed",
+    "dispatched",
+    "on_hold",
+  ]),
+  message: zod.string().optional(),
+});
+
+export const UpdateWorkOrderStatusResponse = zod.object({
+  id: zod.string().uuid(),
+  customerId: zod.string().uuid(),
+  materialId: zod.string().uuid(),
+  orderCode: zod.string(),
+  processType: zod.string(),
+  quantity: zod.number(),
+  status: zod.enum([
+    "received",
+    "queued",
+    "in_process",
+    "quality_check",
+    "completed",
+    "dispatched",
+    "on_hold",
+  ]),
+  dueDate: zod.coerce.date().nullable(),
+  notes: zod.string().nullable(),
+});
+
+/**
+ * @summary List events for a work order
+ */
+export const ListWorkOrderEventsParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const ListWorkOrderEventsResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      workOrderId: zod.string().uuid(),
+      actorUserId: zod.string().uuid().nullable(),
+      eventType: zod.enum([
+        "received",
+        "in_process",
+        "status_change",
+        "quality_check",
+        "completed",
+        "dispatched",
+        "note",
+      ]),
+      message: zod.string(),
+      statusAfter: zod.union([
+        zod.enum([
+          "received",
+          "queued",
+          "in_process",
+          "quality_check",
+          "completed",
+          "dispatched",
+          "on_hold",
+        ]),
+        zod.null(),
+      ]),
+    }),
+  ),
+});

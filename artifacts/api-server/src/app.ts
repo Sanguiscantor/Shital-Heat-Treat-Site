@@ -1,8 +1,10 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import cookieParser from "cookie-parser";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { basicRateLimit } from "./lib/rate-limit";
 
 const app: Express = express();
 
@@ -25,9 +27,17 @@ app.use(
     },
   }),
 );
-app.use(cors());
+const corsOrigin = process.env["CORS_ORIGIN"] ?? "*";
+app.use(
+  cors({
+    origin: corsOrigin === "*" ? true : corsOrigin,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(basicRateLimit);
 
 app.use("/api", router);
 

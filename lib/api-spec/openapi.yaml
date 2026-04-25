@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: operations
+    description: Worker and client operational endpoints
 paths:
   /healthz:
     get:
@@ -24,8 +28,222 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/bootstrap-admin:
+    post:
+      operationId: bootstrapAdmin
+      tags: [auth]
+      summary: Bootstrap initial admin account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BootstrapAdminInput"
+      responses:
+        "201":
+          description: Admin created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "204":
+          description: Logged out
+  /auth/me:
+    get:
+      operationId: getAuthMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /auth/register-worker:
+    post:
+      operationId: registerWorker
+      tags: [auth]
+      summary: Create a worker account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterWorkerInput"
+      responses:
+        "201":
+          description: Worker created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [operations]
+      summary: List customers
+      responses:
+        "200":
+          description: Customer list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerListResponse"
+    post:
+      operationId: createCustomer
+      tags: [operations]
+      summary: Create customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerInput"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+  /materials:
+    post:
+      operationId: createMaterial
+      tags: [operations]
+      summary: Create material entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaterialInput"
+      responses:
+        "201":
+          description: Created material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+  /work-orders:
+    get:
+      operationId: listWorkOrders
+      tags: [operations]
+      summary: List work orders (role scoped)
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Work orders list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderListResponse"
+    post:
+      operationId: createWorkOrder
+      tags: [operations]
+      summary: Create a work order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkOrderInput"
+      responses:
+        "201":
+          description: Created work order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+  /work-orders/{id}/status:
+    patch:
+      operationId: updateWorkOrderStatus
+      tags: [operations]
+      summary: Update work order status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkOrderStatusInput"
+      responses:
+        "200":
+          description: Updated work order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+  /work-orders/{id}/events:
+    get:
+      operationId: listWorkOrderEvents
+      tags: [operations]
+      summary: List events for a work order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Work order events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderEventListResponse"
 components:
   schemas:
+    UserRole:
+      type: string
+      enum: [admin, operator, viewer, client]
+    OrderStatus:
+      type: string
+      enum: [received, queued, in_process, quality_check, completed, dispatched, on_hold]
+    EventType:
+      type: string
+      enum: [received, in_process, status_change, quality_check, completed, dispatched, note]
     HealthStatus:
       type: object
       properties:
@@ -33,4 +251,156 @@ components:
           type: string
       required:
         - status
-
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        customerId:
+          type: [string, "null"]
+          format: uuid
+      required: [id, email, fullName, role, customerId]
+    AuthSession:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+    Customer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        companyName: { type: string }
+        contactName: { type: [string, "null"] }
+        contactEmail: { type: string, format: email }
+        contactPhone: { type: [string, "null"] }
+        isActive: { type: boolean }
+      required: [id, companyName, contactEmail, isActive]
+    Material:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        materialCode: { type: string }
+        description: { type: string }
+        grade: { type: [string, "null"] }
+      required: [id, customerId, materialCode, description, grade]
+    WorkOrderEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        workOrderId: { type: string, format: uuid }
+        actorUserId: { type: [string, "null"], format: uuid }
+        eventType: { $ref: "#/components/schemas/EventType" }
+        message: { type: string }
+        statusAfter:
+          oneOf:
+            - $ref: "#/components/schemas/OrderStatus"
+            - type: "null"
+      required: [id, workOrderId, actorUserId, eventType, message, statusAfter]
+    WorkOrder:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        materialId: { type: string, format: uuid }
+        orderCode: { type: string }
+        processType: { type: string }
+        quantity: { type: integer }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        dueDate: { type: [string, "null"], format: date-time }
+        notes: { type: [string, "null"] }
+      required: [id, customerId, materialId, orderCode, processType, quantity, status, dueDate, notes]
+    CustomerListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+      required: [items]
+    WorkOrderListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkOrder"
+      required: [items]
+    WorkOrderEventListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkOrderEvent"
+      required: [items]
+    BootstrapAdminInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        fullName: { type: string }
+      required: [email, password, fullName]
+    LoginInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+      required: [email, password]
+    RegisterWorkerInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        fullName: { type: string }
+        role:
+          type: string
+          enum: [admin, operator, viewer]
+      required: [email, password, fullName, role]
+    CreateCustomerInput:
+      type: object
+      properties:
+        companyName: { type: string }
+        contactName: { type: [string, "null"] }
+        contactEmail: { type: string, format: email }
+        contactPhone: { type: [string, "null"] }
+      required: [companyName, contactEmail]
+    CreateMaterialInput:
+      type: object
+      properties:
+        customerId: { type: string, format: uuid }
+        materialCode: { type: string }
+        description: { type: string }
+        grade: { type: [string, "null"] }
+      required: [customerId, materialCode, description]
+    CreateWorkOrderInput:
+      type: object
+      properties:
+        customerId: { type: string, format: uuid }
+        materialId: { type: string, format: uuid }
+        orderCode: { type: string }
+        processType: { type: string }
+        quantity: { type: integer }
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        dueDate: { type: [string, "null"], format: date-time }
+        notes: { type: [string, "null"] }
+      required: [customerId, materialId, orderCode, processType, quantity]
+    UpdateWorkOrderStatusInput:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        message: { type: string }
+      required: [status]

@@ -5,6 +5,182 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+export const UserRole = {
+  admin: "admin",
+  operator: "operator",
+  viewer: "viewer",
+  client: "client",
+} as const;
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
+
+export const OrderStatus = {
+  received: "received",
+  queued: "queued",
+  in_process: "in_process",
+  quality_check: "quality_check",
+  completed: "completed",
+  dispatched: "dispatched",
+  on_hold: "on_hold",
+} as const;
+
+export type EventType = (typeof EventType)[keyof typeof EventType];
+
+export const EventType = {
+  received: "received",
+  in_process: "in_process",
+  status_change: "status_change",
+  quality_check: "quality_check",
+  completed: "completed",
+  dispatched: "dispatched",
+  note: "note",
+} as const;
+
 export interface HealthStatus {
   status: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  /** @nullable */
+  customerId: string | null;
+}
+
+export interface AuthSession {
+  token: string;
+  user: User;
+}
+
+export interface Customer {
+  id: string;
+  companyName: string;
+  /** @nullable */
+  contactName?: string | null;
+  contactEmail: string;
+  /** @nullable */
+  contactPhone?: string | null;
+  isActive: boolean;
+}
+
+export interface Material {
+  id: string;
+  customerId: string;
+  materialCode: string;
+  description: string;
+  /** @nullable */
+  grade: string | null;
+}
+
+export interface WorkOrderEvent {
+  id: string;
+  workOrderId: string;
+  /** @nullable */
+  actorUserId: string | null;
+  eventType: EventType;
+  message: string;
+  statusAfter: OrderStatus | null;
+}
+
+export interface WorkOrder {
+  id: string;
+  customerId: string;
+  materialId: string;
+  orderCode: string;
+  processType: string;
+  quantity: number;
+  status: OrderStatus;
+  /** @nullable */
+  dueDate: string | null;
+  /** @nullable */
+  notes: string | null;
+}
+
+export interface CustomerListResponse {
+  items: Customer[];
+}
+
+export interface WorkOrderListResponse {
+  items: WorkOrder[];
+}
+
+export interface WorkOrderEventListResponse {
+  items: WorkOrderEvent[];
+}
+
+export interface BootstrapAdminInput {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  fullName: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export type RegisterWorkerInputRole =
+  (typeof RegisterWorkerInputRole)[keyof typeof RegisterWorkerInputRole];
+
+export const RegisterWorkerInputRole = {
+  admin: "admin",
+  operator: "operator",
+  viewer: "viewer",
+} as const;
+
+export interface RegisterWorkerInput {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  fullName: string;
+  role: RegisterWorkerInputRole;
+}
+
+export interface CreateCustomerInput {
+  companyName: string;
+  /** @nullable */
+  contactName?: string | null;
+  contactEmail: string;
+  /** @nullable */
+  contactPhone?: string | null;
+}
+
+export interface CreateMaterialInput {
+  customerId: string;
+  materialCode: string;
+  description: string;
+  /** @nullable */
+  grade?: string | null;
+}
+
+export interface CreateWorkOrderInput {
+  customerId: string;
+  materialId: string;
+  orderCode: string;
+  processType: string;
+  quantity: number;
+  status?: OrderStatus;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface UpdateWorkOrderStatusInput {
+  status: OrderStatus;
+  message?: string;
+}
+
+export type ListWorkOrdersParams = {
+  status?: OrderStatus;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+};

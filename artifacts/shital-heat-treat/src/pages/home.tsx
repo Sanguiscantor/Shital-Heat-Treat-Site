@@ -100,7 +100,7 @@ export default function Home() {
 
           <div className="flex items-center gap-4">
             <Link href="/login" className="hidden md:inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold border border-[#1A202C] text-gray-300 hover:text-white hover:border-[#F39200] hover:bg-[#F39200]/10 transition-all uppercase tracking-wider">
-              Client Login
+              Login
             </Link>
             <button className="lg:hidden text-white p-2">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
@@ -309,7 +309,7 @@ export default function Home() {
               <div className="lg:w-1/3">
                 <SectionHeading subtitle="Furnace Spec">Size & Capacity</SectionHeading>
                 <p className="text-gray-400 font-light leading-relaxed mb-8">
-                  Our advanced Indiad Cofi (Italy) vacuum hardening furnace provides precise atmospheric control, ensuring consistent, repeatable, and oxidation-free results for the most critical metallurgical requirements.
+                  Our advanced Cofi-Indaid (Italy) vacuum hardening furnace provides precise atmospheric control, ensuring consistent, repeatable, and oxidation-free results for the most critical metallurgical requirements.
                 </p>
                 <div className="aspect-[4/3] border border-[#1A202C] overflow-hidden">
                   <img src={moldDieUrl} alt="Mold die cavity" className="w-full h-full object-cover opacity-70 mix-blend-luminosity grayscale hover:grayscale-0 transition-all duration-700" />
@@ -319,7 +319,7 @@ export default function Home() {
               <div className="lg:w-2/3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 h-full content-start">
                   {[
-                    { label: 'Technology', value: 'Indiad Cofi – Italy', icon: <Factory /> },
+                    { label: 'Technology', value: 'Cofi-Indaid – Italy', icon: <Factory /> },
                     { label: 'Working Space (W×L×H)', value: '600 × 900 × 600 mm', icon: <Target /> },
                     { label: 'Maximum Load', value: '600 kg', icon: <Shield /> },
                     { label: 'Quenching Pressure', value: '10 bar, N₂ (Nitrogen)', icon: <Gauge /> }
