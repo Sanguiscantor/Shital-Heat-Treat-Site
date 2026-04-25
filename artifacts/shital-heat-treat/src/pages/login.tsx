@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { setAuthTokenGetter, useLogin } from "@workspace/api-client-react";
 import { saveSession } from "@/lib/auth-session";
-import { getPlaceholderCredentials, tryPlaceholderLogin } from "@/lib/placeholder-auth";
+import { getPlaceholderCredentialList, tryPlaceholderLogin } from "@/lib/placeholder-auth";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -17,7 +17,7 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [, navigate] = useLocation();
   const loginMutation = useLogin();
-  const placeholder = getPlaceholderCredentials("client");
+  const placeholders = getPlaceholderCredentialList("client");
 
   const emailError =
     email.length === 0
@@ -95,9 +95,13 @@ export function Login() {
         <p className="text-center text-muted-foreground mb-8 text-sm">
           Access order status, certifications, and treatment history in one place.
         </p>
-        <p className="text-center text-xs text-muted-foreground mb-4">
-          Placeholder: {placeholder.email} / {placeholder.password}
-        </p>
+        <div className="text-center text-xs text-muted-foreground mb-4 space-y-1">
+          {placeholders.map((placeholder) => (
+            <p key={placeholder.email}>
+              {placeholder.name}: {placeholder.email} / {placeholder.password}
+            </p>
+          ))}
+        </div>
 
         <form className="space-y-5" onSubmit={handleSubmit} noValidate>
           <div className="space-y-2">

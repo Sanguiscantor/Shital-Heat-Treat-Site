@@ -8,12 +8,7 @@
 import type { InspectionState } from "./inspectionState";
 import type { OrderStatus } from "./orderStatus";
 
-export interface CreateWorkOrderInput {
-  customerId: string;
-  materialId: string;
-  orderCode: string;
-  processType: string;
-  quantity: number;
+export interface UpdateWorkOrderWorkerFieldsInput {
   status?: OrderStatus;
   initialInspection?: InspectionState;
   stressRelieving?: boolean;
@@ -22,8 +17,6 @@ export interface CreateWorkOrderInput {
   finalInspection?: InspectionState;
   /** @nullable */
   remarks?: string | null;
-  /** @nullable */
-  dueDate?: Date | null;
   /** @nullable */
   notes?: string | null;
 }

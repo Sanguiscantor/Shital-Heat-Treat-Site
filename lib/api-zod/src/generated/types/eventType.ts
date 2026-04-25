@@ -14,6 +14,7 @@ export const EventType = {
   status_change: "status_change",
   quality_check: "quality_check",
   completed: "completed",
+  ready_for_dispatch: "ready_for_dispatch",
   dispatched: "dispatched",
   note: "note",
 } as const;

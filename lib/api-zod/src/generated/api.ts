@@ -95,6 +95,25 @@ export const CreateCustomerBody = zod.object({
 });
 
 /**
+ * @summary List materials
+ */
+export const ListMaterialsQueryParams = zod.object({
+  customerId: zod.coerce.string().uuid().optional(),
+});
+
+export const ListMaterialsResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      customerId: zod.string().uuid(),
+      materialCode: zod.string(),
+      description: zod.string(),
+      grade: zod.string().nullable(),
+    }),
+  ),
+});
+
+/**
  * @summary Create material entry
  */
 export const CreateMaterialBody = zod.object({
@@ -117,6 +136,7 @@ export const ListWorkOrdersQueryParams = zod.object({
       "in_process",
       "quality_check",
       "completed",
+      "ready_for_dispatch",
       "dispatched",
       "on_hold",
     ])
@@ -139,9 +159,17 @@ export const ListWorkOrdersResponse = zod.object({
         "in_process",
         "quality_check",
         "completed",
+        "ready_for_dispatch",
         "dispatched",
         "on_hold",
       ]),
+      initialInspection: zod.enum(["ok", "not_ok"]),
+      stressRelieving: zod.boolean(),
+      hardening: zod.boolean(),
+      temperingCycles: zod.number(),
+      finalInspection: zod.enum(["ok", "not_ok"]),
+      remarks: zod.string().nullable(),
+      archivedAt: zod.coerce.date().nullable(),
       dueDate: zod.coerce.date().nullable(),
       notes: zod.string().nullable(),
     }),
@@ -164,10 +192,17 @@ export const CreateWorkOrderBody = zod.object({
       "in_process",
       "quality_check",
       "completed",
+      "ready_for_dispatch",
       "dispatched",
       "on_hold",
     ])
     .optional(),
+  initialInspection: zod.enum(["ok", "not_ok"]).optional(),
+  stressRelieving: zod.boolean().optional(),
+  hardening: zod.boolean().optional(),
+  temperingCycles: zod.number().optional(),
+  finalInspection: zod.enum(["ok", "not_ok"]).optional(),
+  remarks: zod.string().nullish(),
   dueDate: zod.coerce.date().nullish(),
   notes: zod.string().nullish(),
 });
@@ -186,6 +221,7 @@ export const UpdateWorkOrderStatusBody = zod.object({
     "in_process",
     "quality_check",
     "completed",
+    "ready_for_dispatch",
     "dispatched",
     "on_hold",
   ]),
@@ -205,9 +241,109 @@ export const UpdateWorkOrderStatusResponse = zod.object({
     "in_process",
     "quality_check",
     "completed",
+    "ready_for_dispatch",
     "dispatched",
     "on_hold",
   ]),
+  initialInspection: zod.enum(["ok", "not_ok"]),
+  stressRelieving: zod.boolean(),
+  hardening: zod.boolean(),
+  temperingCycles: zod.number(),
+  finalInspection: zod.enum(["ok", "not_ok"]),
+  remarks: zod.string().nullable(),
+  archivedAt: zod.coerce.date().nullable(),
+  dueDate: zod.coerce.date().nullable(),
+  notes: zod.string().nullable(),
+});
+
+/**
+ * @summary Update worker fields for work order
+ */
+export const UpdateWorkOrderWorkerFieldsParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const UpdateWorkOrderWorkerFieldsBody = zod.object({
+  status: zod
+    .enum([
+      "received",
+      "queued",
+      "in_process",
+      "quality_check",
+      "completed",
+      "ready_for_dispatch",
+      "dispatched",
+      "on_hold",
+    ])
+    .optional(),
+  initialInspection: zod.enum(["ok", "not_ok"]).optional(),
+  stressRelieving: zod.boolean().optional(),
+  hardening: zod.boolean().optional(),
+  temperingCycles: zod.number().optional(),
+  finalInspection: zod.enum(["ok", "not_ok"]).optional(),
+  remarks: zod.string().nullish(),
+  notes: zod.string().nullish(),
+});
+
+export const UpdateWorkOrderWorkerFieldsResponse = zod.object({
+  id: zod.string().uuid(),
+  customerId: zod.string().uuid(),
+  materialId: zod.string().uuid(),
+  orderCode: zod.string(),
+  processType: zod.string(),
+  quantity: zod.number(),
+  status: zod.enum([
+    "received",
+    "queued",
+    "in_process",
+    "quality_check",
+    "completed",
+    "ready_for_dispatch",
+    "dispatched",
+    "on_hold",
+  ]),
+  initialInspection: zod.enum(["ok", "not_ok"]),
+  stressRelieving: zod.boolean(),
+  hardening: zod.boolean(),
+  temperingCycles: zod.number(),
+  finalInspection: zod.enum(["ok", "not_ok"]),
+  remarks: zod.string().nullable(),
+  archivedAt: zod.coerce.date().nullable(),
+  dueDate: zod.coerce.date().nullable(),
+  notes: zod.string().nullable(),
+});
+
+/**
+ * @summary Submit work order update and trigger client notification
+ */
+export const SubmitWorkOrderParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const SubmitWorkOrderResponse = zod.object({
+  id: zod.string().uuid(),
+  customerId: zod.string().uuid(),
+  materialId: zod.string().uuid(),
+  orderCode: zod.string(),
+  processType: zod.string(),
+  quantity: zod.number(),
+  status: zod.enum([
+    "received",
+    "queued",
+    "in_process",
+    "quality_check",
+    "completed",
+    "ready_for_dispatch",
+    "dispatched",
+    "on_hold",
+  ]),
+  initialInspection: zod.enum(["ok", "not_ok"]),
+  stressRelieving: zod.boolean(),
+  hardening: zod.boolean(),
+  temperingCycles: zod.number(),
+  finalInspection: zod.enum(["ok", "not_ok"]),
+  remarks: zod.string().nullable(),
+  archivedAt: zod.coerce.date().nullable(),
   dueDate: zod.coerce.date().nullable(),
   notes: zod.string().nullable(),
 });
@@ -231,6 +367,7 @@ export const ListWorkOrderEventsResponse = zod.object({
         "status_change",
         "quality_check",
         "completed",
+        "ready_for_dispatch",
         "dispatched",
         "note",
       ]),
@@ -242,11 +379,30 @@ export const ListWorkOrderEventsResponse = zod.object({
           "in_process",
           "quality_check",
           "completed",
+          "ready_for_dispatch",
           "dispatched",
           "on_hold",
         ]),
         zod.null(),
       ]),
+    }),
+  ),
+});
+
+/**
+ * @summary List client notifications
+ */
+export const ListNotificationsResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      customerId: zod.string().uuid(),
+      workOrderId: zod.string().uuid(),
+      title: zod.string(),
+      message: zod.string(),
+      status: zod.string(),
+      channel: zod.string(),
+      createdAt: zod.coerce.date(),
     }),
   ),
 });

@@ -16,6 +16,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "in_process",
   "quality_check",
   "completed",
+  "ready_for_dispatch",
   "dispatched",
   "on_hold",
 ]);
@@ -25,9 +26,11 @@ export const eventTypeEnum = pgEnum("event_type", [
   "status_change",
   "quality_check",
   "completed",
+  "ready_for_dispatch",
   "dispatched",
   "note",
 ]);
+export const inspectionStateEnum = pgEnum("inspection_state", ["ok", "not_ok"]);
 
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -76,6 +79,13 @@ export const workOrders = pgTable("work_orders", {
   processType: text("process_type").notNull(),
   quantity: integer("quantity").notNull(),
   status: orderStatusEnum("status").notNull().default("received"),
+  initialInspection: inspectionStateEnum("initial_inspection").notNull().default("ok"),
+  stressRelieving: boolean("stress_relieving").notNull().default(false),
+  hardening: boolean("hardening").notNull().default(false),
+  temperingCycles: integer("tempering_cycles").notNull().default(2),
+  finalInspection: inspectionStateEnum("final_inspection").notNull().default("ok"),
+  remarks: text("remarks"),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   dueDate: timestamp("due_date", { withTimezone: true }),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -108,6 +118,21 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const clientNotifications = pgTable("client_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id")
+    .notNull()
+    .references(() => customers.id, { onDelete: "cascade" }),
+  workOrderId: uuid("work_order_id")
+    .notNull()
+    .references(() => workOrders.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("pending"),
+  channel: text("channel").notNull().default("in_app"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
@@ -122,6 +147,7 @@ export const customerRelations = relations(customers, ({ many }) => ({
   users: many(users),
   materials: many(materials),
   workOrders: many(workOrders),
+  notifications: many(clientNotifications),
 }));
 
 export const userRelations = relations(users, ({ one, many }) => ({
@@ -153,4 +179,16 @@ export const workOrderRelations = relations(workOrders, ({ one, many }) => ({
   }),
   events: many(workOrderEvents),
   documents: many(documents),
+  notifications: many(clientNotifications),
+}));
+
+export const clientNotificationRelations = relations(clientNotifications, ({ one }) => ({
+  customer: one(customers, {
+    fields: [clientNotifications.customerId],
+    references: [customers.id],
+  }),
+  workOrder: one(workOrders, {
+    fields: [clientNotifications.workOrderId],
+    references: [workOrders.id],
+  }),
 }));

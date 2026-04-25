@@ -25,11 +25,15 @@ import type {
   Customer,
   CustomerListResponse,
   HealthStatus,
+  ListMaterialsParams,
   ListWorkOrdersParams,
   LoginInput,
   Material,
+  MaterialListResponse,
+  NotificationListResponse,
   RegisterWorkerInput,
   UpdateWorkOrderStatusInput,
+  UpdateWorkOrderWorkerFieldsInput,
   User,
   WorkOrder,
   WorkOrderEventListResponse,
@@ -685,6 +689,100 @@ export const useCreateCustomer = <
 };
 
 /**
+ * @summary List materials
+ */
+export const getListMaterialsUrl = (params?: ListMaterialsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/materials?${stringifiedParams}`
+    : `/api/materials`;
+};
+
+export const listMaterials = async (
+  params?: ListMaterialsParams,
+  options?: RequestInit,
+): Promise<MaterialListResponse> => {
+  return customFetch<MaterialListResponse>(getListMaterialsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMaterialsQueryKey = (params?: ListMaterialsParams) => {
+  return [`/api/materials`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMaterialsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMaterials>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMaterialsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMaterials>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMaterialsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMaterials>>> = ({
+    signal,
+  }) => listMaterials(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMaterials>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMaterialsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMaterials>>
+>;
+export type ListMaterialsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List materials
+ */
+
+export function useListMaterials<
+  TData = Awaited<ReturnType<typeof listMaterials>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMaterialsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMaterials>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMaterialsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Create material entry
  */
 export const getCreateMaterialUrl = () => {
@@ -1039,6 +1137,178 @@ export const useUpdateWorkOrderStatus = <
 };
 
 /**
+ * @summary Update worker fields for work order
+ */
+export const getUpdateWorkOrderWorkerFieldsUrl = (id: string) => {
+  return `/api/work-orders/${id}/worker-fields`;
+};
+
+export const updateWorkOrderWorkerFields = async (
+  id: string,
+  updateWorkOrderWorkerFieldsInput: UpdateWorkOrderWorkerFieldsInput,
+  options?: RequestInit,
+): Promise<WorkOrder> => {
+  return customFetch<WorkOrder>(getUpdateWorkOrderWorkerFieldsUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateWorkOrderWorkerFieldsInput),
+  });
+};
+
+export const getUpdateWorkOrderWorkerFieldsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWorkOrderWorkerFields>>,
+    TError,
+    { id: string; data: BodyType<UpdateWorkOrderWorkerFieldsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateWorkOrderWorkerFields>>,
+  TError,
+  { id: string; data: BodyType<UpdateWorkOrderWorkerFieldsInput> },
+  TContext
+> => {
+  const mutationKey = ["updateWorkOrderWorkerFields"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateWorkOrderWorkerFields>>,
+    { id: string; data: BodyType<UpdateWorkOrderWorkerFieldsInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateWorkOrderWorkerFields(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateWorkOrderWorkerFieldsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateWorkOrderWorkerFields>>
+>;
+export type UpdateWorkOrderWorkerFieldsMutationBody =
+  BodyType<UpdateWorkOrderWorkerFieldsInput>;
+export type UpdateWorkOrderWorkerFieldsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update worker fields for work order
+ */
+export const useUpdateWorkOrderWorkerFields = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWorkOrderWorkerFields>>,
+    TError,
+    { id: string; data: BodyType<UpdateWorkOrderWorkerFieldsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateWorkOrderWorkerFields>>,
+  TError,
+  { id: string; data: BodyType<UpdateWorkOrderWorkerFieldsInput> },
+  TContext
+> => {
+  return useMutation(getUpdateWorkOrderWorkerFieldsMutationOptions(options));
+};
+
+/**
+ * @summary Submit work order update and trigger client notification
+ */
+export const getSubmitWorkOrderUrl = (id: string) => {
+  return `/api/work-orders/${id}/submit`;
+};
+
+export const submitWorkOrder = async (
+  id: string,
+  options?: RequestInit,
+): Promise<WorkOrder> => {
+  return customFetch<WorkOrder>(getSubmitWorkOrderUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSubmitWorkOrderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitWorkOrder>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitWorkOrder>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["submitWorkOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitWorkOrder>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return submitWorkOrder(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitWorkOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitWorkOrder>>
+>;
+
+export type SubmitWorkOrderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit work order update and trigger client notification
+ */
+export const useSubmitWorkOrder = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitWorkOrder>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitWorkOrder>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getSubmitWorkOrderMutationOptions(options));
+};
+
+/**
  * @summary List events for a work order
  */
 export const getListWorkOrderEventsUrl = (id: string) => {
@@ -1120,6 +1390,81 @@ export function useListWorkOrderEvents<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListWorkOrderEventsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List client notifications
+ */
+export const getListNotificationsUrl = () => {
+  return `/api/notifications`;
+};
+
+export const listNotifications = async (
+  options?: RequestInit,
+): Promise<NotificationListResponse> => {
+  return customFetch<NotificationListResponse>(getListNotificationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListNotificationsQueryKey = () => {
+  return [`/api/notifications`] as const;
+};
+
+export const getListNotificationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListNotificationsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listNotifications>>
+  > = ({ signal }) => listNotifications({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListNotificationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listNotifications>>
+>;
+export type ListNotificationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List client notifications
+ */
+
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListNotificationsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import {
   auditLogs,
+  clientNotifications,
   customers,
   db,
   materials,
@@ -18,6 +19,7 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 
 router.get("/work-orders", requireAuth, async (req, res) => {
   const status = typeof req.query["status"] === "string" ? req.query["status"] : undefined;
+  const includeArchived = req.query["includeArchived"] === "true";
   const limitParam = Number(req.query["limit"] ?? 25);
   const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 25;
   const clauses = [];
@@ -31,6 +33,9 @@ router.get("/work-orders", requireAuth, async (req, res) => {
   }
   if (status) {
     clauses.push(eq(workOrders.status, status as typeof workOrders.$inferSelect.status));
+  }
+  if (!includeArchived) {
+    clauses.push(isNull(workOrders.archivedAt));
   }
 
   const list = await db.query.workOrders.findMany({
@@ -62,6 +67,12 @@ router.post(
       processType?: string;
       quantity?: number;
       status?: typeof workOrders.$inferInsert.status;
+      initialInspection?: "ok" | "not_ok";
+      stressRelieving?: boolean;
+      hardening?: boolean;
+      temperingCycles?: number;
+      finalInspection?: "ok" | "not_ok";
+      remarks?: string | null;
       dueDate?: string | null;
       notes?: string | null;
     };
@@ -86,6 +97,12 @@ router.post(
         processType: body.processType,
         quantity: body.quantity,
         status: body.status ?? "received",
+        initialInspection: body.initialInspection ?? "ok",
+        stressRelieving: body.stressRelieving ?? false,
+        hardening: body.hardening ?? false,
+        temperingCycles: body.temperingCycles ?? 2,
+        finalInspection: body.finalInspection ?? "ok",
+        remarks: body.remarks ?? null,
         dueDate: body.dueDate ? new Date(body.dueDate) : null,
         notes: body.notes ?? null,
       })
@@ -110,6 +127,26 @@ router.post(
     });
 
     res.status(201).json(created);
+  },
+);
+
+router.get(
+  "/materials",
+  requireAuth,
+  requireRoles("admin", "operator", "viewer"),
+  async (req, res) => {
+    const customerId = typeof req.query["customerId"] === "string" ? req.query["customerId"] : undefined;
+    const clauses = [];
+    if (req.auth!.role === "client" && req.auth!.customerId) {
+      clauses.push(eq(materials.customerId, req.auth!.customerId));
+    } else if (customerId) {
+      clauses.push(eq(materials.customerId, customerId));
+    }
+    const items = await db.query.materials.findMany({
+      where: clauses.length > 0 ? and(...clauses) : undefined,
+      orderBy: [desc(materials.createdAt)],
+    });
+    res.json({ items });
   },
 );
 
@@ -156,6 +193,121 @@ router.patch(
       entityType: "work_order",
       entityId: id,
       detailsJson: JSON.stringify({ status }),
+    });
+
+    res.json(updated);
+  },
+);
+
+router.patch(
+  "/work-orders/:id/worker-fields",
+  requireAuth,
+  requireRoles("admin", "operator"),
+  async (req, res) => {
+    const id = firstParam(req.params["id"]);
+    if (!id) {
+      res.status(400).json({ message: "id is required." });
+      return;
+    }
+    const body = req.body as Partial<{
+      status: typeof workOrders.$inferInsert.status;
+      initialInspection: "ok" | "not_ok";
+      stressRelieving: boolean;
+      hardening: boolean;
+      temperingCycles: number;
+      finalInspection: "ok" | "not_ok";
+      remarks: string | null;
+      notes: string | null;
+    }>;
+
+    const [updated] = await db
+      .update(workOrders)
+      .set({
+        ...(body.status ? { status: body.status } : {}),
+        ...(body.initialInspection ? { initialInspection: body.initialInspection } : {}),
+        ...(typeof body.stressRelieving === "boolean"
+          ? { stressRelieving: body.stressRelieving }
+          : {}),
+        ...(typeof body.hardening === "boolean" ? { hardening: body.hardening } : {}),
+        ...(typeof body.temperingCycles === "number"
+          ? { temperingCycles: body.temperingCycles }
+          : {}),
+        ...(body.finalInspection ? { finalInspection: body.finalInspection } : {}),
+        ...(typeof body.remarks !== "undefined" ? { remarks: body.remarks } : {}),
+        ...(typeof body.notes !== "undefined" ? { notes: body.notes } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(workOrders.id, id))
+      .returning();
+
+    if (!updated) {
+      res.status(404).json({ message: "Work order not found." });
+      return;
+    }
+    res.json(updated);
+  },
+);
+
+router.post(
+  "/work-orders/:id/submit",
+  requireAuth,
+  requireRoles("admin", "operator"),
+  async (req, res) => {
+    const id = firstParam(req.params["id"]);
+    if (!id) {
+      res.status(400).json({ message: "id is required." });
+      return;
+    }
+    const source = await db.query.workOrders.findFirst({ where: eq(workOrders.id, id) });
+    if (!source) {
+      res.status(404).json({ message: "Work order not found." });
+      return;
+    }
+
+    if (source.finalInspection === "not_ok" && !(source.remarks ?? "").trim()) {
+      res.status(400).json({ message: "Remarks are required when final inspection is not OK." });
+      return;
+    }
+
+    const [updated] = await db
+      .update(workOrders)
+      .set({
+        archivedAt: source.status === "dispatched" ? new Date() : source.archivedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(workOrders.id, id))
+      .returning();
+
+    const statusMessage = `Status submitted as ${updated.status}`;
+
+    await db.insert(workOrderEvents).values({
+      workOrderId: id,
+      actorUserId: req.auth!.sub,
+      eventType:
+        updated.status === "dispatched"
+          ? "dispatched"
+          : updated.status === "ready_for_dispatch"
+            ? "ready_for_dispatch"
+            : "status_change",
+      message: statusMessage,
+      statusAfter: updated.status,
+    });
+
+    await db.insert(clientNotifications).values({
+      customerId: updated.customerId,
+      workOrderId: id,
+      title: "Job status update",
+      message: `${updated.orderCode}: ${updated.status.replaceAll("_", " ")}`,
+      status: "pending",
+      channel: "in_app",
+    });
+
+    await db.insert(auditLogs).values({
+      actorUserId: req.auth!.sub,
+      action: "work_order_submitted",
+      entityType: "work_order",
+      entityId: id,
+      detailsJson: JSON.stringify({ status: updated.status }),
     });
 
     res.json(updated);
@@ -238,6 +390,23 @@ router.get("/work-orders/:id/events", requireAuth, async (req, res) => {
     orderBy: [desc(workOrderEvents.createdAt)],
   });
   res.json({ items: events });
+});
+
+router.get("/notifications", requireAuth, async (req, res) => {
+  const clauses = [];
+  if (req.auth!.role === "client") {
+    if (!req.auth!.customerId) {
+      res.json({ items: [] });
+      return;
+    }
+    clauses.push(eq(clientNotifications.customerId, req.auth!.customerId));
+  }
+  const items = await db.query.clientNotifications.findMany({
+    where: clauses.length ? and(...clauses) : undefined,
+    orderBy: [desc(clientNotifications.createdAt)],
+    limit: 100,
+  });
+  res.json({ items });
 });
 
 export default router;

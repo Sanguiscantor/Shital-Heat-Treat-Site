@@ -14,6 +14,7 @@ export const OrderStatus = {
   in_process: "in_process",
   quality_check: "quality_check",
   completed: "completed",
+  ready_for_dispatch: "ready_for_dispatch",
   dispatched: "dispatched",
   on_hold: "on_hold",
 } as const;

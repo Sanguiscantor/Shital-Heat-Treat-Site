@@ -132,6 +132,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/Customer"
   /materials:
+    get:
+      operationId: listMaterials
+      tags: [operations]
+      summary: List materials
+      parameters:
+        - in: query
+          name: customerId
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Material list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialListResponse"
     post:
       operationId: createMaterial
       tags: [operations]
@@ -214,6 +231,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkOrder"
+  /work-orders/{id}/worker-fields:
+    patch:
+      operationId: updateWorkOrderWorkerFields
+      tags: [operations]
+      summary: Update worker fields for work order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkOrderWorkerFieldsInput"
+      responses:
+        "200":
+          description: Updated work order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+  /work-orders/{id}/submit:
+    post:
+      operationId: submitWorkOrder
+      tags: [operations]
+      summary: Submit work order update and trigger client notification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Submitted work order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
   /work-orders/{id}/events:
     get:
       operationId: listWorkOrderEvents
@@ -233,6 +294,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkOrderEventListResponse"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [operations]
+      summary: List client notifications
+      responses:
+        "200":
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
 components:
   schemas:
     UserRole:
@@ -240,10 +313,13 @@ components:
       enum: [admin, operator, viewer, client]
     OrderStatus:
       type: string
-      enum: [received, queued, in_process, quality_check, completed, dispatched, on_hold]
+      enum: [received, queued, in_process, quality_check, completed, ready_for_dispatch, dispatched, on_hold]
     EventType:
       type: string
-      enum: [received, in_process, status_change, quality_check, completed, dispatched, note]
+      enum: [received, in_process, status_change, quality_check, completed, ready_for_dispatch, dispatched, note]
+    InspectionState:
+      type: string
+      enum: [ok, not_ok]
     HealthStatus:
       type: object
       properties:
@@ -295,6 +371,18 @@ components:
         description: { type: string }
         grade: { type: [string, "null"] }
       required: [id, customerId, materialCode, description, grade]
+    Notification:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        workOrderId: { type: string, format: uuid }
+        title: { type: string }
+        message: { type: string }
+        status: { type: string }
+        channel: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, customerId, workOrderId, title, message, status, channel, createdAt]
     WorkOrderEvent:
       type: object
       properties:
@@ -318,9 +406,16 @@ components:
         processType: { type: string }
         quantity: { type: integer }
         status: { $ref: "#/components/schemas/OrderStatus" }
+        initialInspection: { $ref: "#/components/schemas/InspectionState" }
+        stressRelieving: { type: boolean }
+        hardening: { type: boolean }
+        temperingCycles: { type: integer }
+        finalInspection: { $ref: "#/components/schemas/InspectionState" }
+        remarks: { type: [string, "null"] }
+        archivedAt: { type: [string, "null"], format: date-time }
         dueDate: { type: [string, "null"], format: date-time }
         notes: { type: [string, "null"] }
-      required: [id, customerId, materialId, orderCode, processType, quantity, status, dueDate, notes]
+      required: [id, customerId, materialId, orderCode, processType, quantity, status, initialInspection, stressRelieving, hardening, temperingCycles, finalInspection, remarks, archivedAt, dueDate, notes]
     CustomerListResponse:
       type: object
       properties:
@@ -328,6 +423,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Customer"
+      required: [items]
+    MaterialListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Material"
       required: [items]
     WorkOrderListResponse:
       type: object
@@ -344,6 +447,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/WorkOrderEvent"
+      required: [items]
+    NotificationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
       required: [items]
     BootstrapAdminInput:
       type: object
@@ -394,6 +505,14 @@ components:
         quantity: { type: integer }
         status:
           $ref: "#/components/schemas/OrderStatus"
+        initialInspection:
+          $ref: "#/components/schemas/InspectionState"
+        stressRelieving: { type: boolean }
+        hardening: { type: boolean }
+        temperingCycles: { type: integer }
+        finalInspection:
+          $ref: "#/components/schemas/InspectionState"
+        remarks: { type: [string, "null"] }
         dueDate: { type: [string, "null"], format: date-time }
         notes: { type: [string, "null"] }
       required: [customerId, materialId, orderCode, processType, quantity]
@@ -404,3 +523,17 @@ components:
           $ref: "#/components/schemas/OrderStatus"
         message: { type: string }
       required: [status]
+    UpdateWorkOrderWorkerFieldsInput:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        initialInspection:
+          $ref: "#/components/schemas/InspectionState"
+        stressRelieving: { type: boolean }
+        hardening: { type: boolean }
+        temperingCycles: { type: integer }
+        finalInspection:
+          $ref: "#/components/schemas/InspectionState"
+        remarks: { type: [string, "null"] }
+        notes: { type: [string, "null"] }

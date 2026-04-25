@@ -22,6 +22,7 @@ export const OrderStatus = {
   in_process: "in_process",
   quality_check: "quality_check",
   completed: "completed",
+  ready_for_dispatch: "ready_for_dispatch",
   dispatched: "dispatched",
   on_hold: "on_hold",
 } as const;
@@ -34,8 +35,17 @@ export const EventType = {
   status_change: "status_change",
   quality_check: "quality_check",
   completed: "completed",
+  ready_for_dispatch: "ready_for_dispatch",
   dispatched: "dispatched",
   note: "note",
+} as const;
+
+export type InspectionState =
+  (typeof InspectionState)[keyof typeof InspectionState];
+
+export const InspectionState = {
+  ok: "ok",
+  not_ok: "not_ok",
 } as const;
 
 export interface HealthStatus {
@@ -76,6 +86,17 @@ export interface Material {
   grade: string | null;
 }
 
+export interface Notification {
+  id: string;
+  customerId: string;
+  workOrderId: string;
+  title: string;
+  message: string;
+  status: string;
+  channel: string;
+  createdAt: string;
+}
+
 export interface WorkOrderEvent {
   id: string;
   workOrderId: string;
@@ -94,6 +115,15 @@ export interface WorkOrder {
   processType: string;
   quantity: number;
   status: OrderStatus;
+  initialInspection: InspectionState;
+  stressRelieving: boolean;
+  hardening: boolean;
+  temperingCycles: number;
+  finalInspection: InspectionState;
+  /** @nullable */
+  remarks: string | null;
+  /** @nullable */
+  archivedAt: string | null;
   /** @nullable */
   dueDate: string | null;
   /** @nullable */
@@ -104,12 +134,20 @@ export interface CustomerListResponse {
   items: Customer[];
 }
 
+export interface MaterialListResponse {
+  items: Material[];
+}
+
 export interface WorkOrderListResponse {
   items: WorkOrder[];
 }
 
 export interface WorkOrderEventListResponse {
   items: WorkOrderEvent[];
+}
+
+export interface NotificationListResponse {
+  items: Notification[];
 }
 
 export interface BootstrapAdminInput {
@@ -165,6 +203,13 @@ export interface CreateWorkOrderInput {
   processType: string;
   quantity: number;
   status?: OrderStatus;
+  initialInspection?: InspectionState;
+  stressRelieving?: boolean;
+  hardening?: boolean;
+  temperingCycles?: number;
+  finalInspection?: InspectionState;
+  /** @nullable */
+  remarks?: string | null;
   /** @nullable */
   dueDate?: string | null;
   /** @nullable */
@@ -175,6 +220,23 @@ export interface UpdateWorkOrderStatusInput {
   status: OrderStatus;
   message?: string;
 }
+
+export interface UpdateWorkOrderWorkerFieldsInput {
+  status?: OrderStatus;
+  initialInspection?: InspectionState;
+  stressRelieving?: boolean;
+  hardening?: boolean;
+  temperingCycles?: number;
+  finalInspection?: InspectionState;
+  /** @nullable */
+  remarks?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export type ListMaterialsParams = {
+  customerId?: string;
+};
 
 export type ListWorkOrdersParams = {
   status?: OrderStatus;

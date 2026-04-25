@@ -6,8 +6,6 @@ import { Flame, Shield, Gauge, Target, Factory, ArrowRight, Phone, Mail, MapPin,
 // @ts-ignore
 import heroFurnaceUrl from "@/assets/hero-furnace.png";
 // @ts-ignore
-import gearHeatUrl from "@/assets/gear-heat.png";
-// @ts-ignore
 import moldDieUrl from "@/assets/mold-die.png";
 // @ts-ignore
 import shtLogoUrl from "@/assets/sht-logo.png";
@@ -221,7 +219,11 @@ export default function Home() {
                 className="relative aspect-square lg:aspect-[4/5] bg-[#1A202C] p-4"
               >
                 <div className="w-full h-full relative overflow-hidden border border-gray-800">
-                  <img src={gearHeatUrl} alt="Precision gear heat treatment" className="w-full h-full object-cover opacity-80" />
+                  <img
+                    src={heroFurnaceUrl}
+                    alt="Vacuum heat treatment furnace"
+                    className="w-full h-full object-cover opacity-80"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0D14] to-transparent opacity-60"></div>
                 </div>
                 
@@ -443,7 +445,8 @@ export default function Home() {
           
           <div className="container mx-auto px-6 md:px-12 relative z-10 text-center max-w-4xl">
             <h2 className="text-4xl md:text-6xl font-bold text-white uppercase tracking-tight mb-8">
-              Let's Build Stronger Components Together.
+              <span className="block">LET'S BUILD</span>
+              <span className="block">STRONGER COMPONENTS TOGETHER</span>
             </h2>
             <p className="text-xl text-gray-400 mb-16">
               Partner with Shital Heat Treat Pvt. Ltd. for precision-driven, reliable heat treatment solutions.

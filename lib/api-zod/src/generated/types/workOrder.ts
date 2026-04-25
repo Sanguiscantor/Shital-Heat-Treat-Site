@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { InspectionState } from "./inspectionState";
 import type { OrderStatus } from "./orderStatus";
 
 export interface WorkOrder {
@@ -15,6 +16,15 @@ export interface WorkOrder {
   processType: string;
   quantity: number;
   status: OrderStatus;
+  initialInspection: InspectionState;
+  stressRelieving: boolean;
+  hardening: boolean;
+  temperingCycles: number;
+  finalInspection: InspectionState;
+  /** @nullable */
+  remarks: string | null;
+  /** @nullable */
+  archivedAt: Date | null;
   /** @nullable */
   dueDate: Date | null;
   /** @nullable */

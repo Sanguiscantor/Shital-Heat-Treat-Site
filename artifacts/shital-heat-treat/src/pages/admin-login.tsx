@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { saveSession } from "@/lib/auth-session";
-import { getPlaceholderCredentials, tryPlaceholderLogin } from "@/lib/placeholder-auth";
+import { getPlaceholderCredentialList, tryPlaceholderLogin } from "@/lib/placeholder-auth";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [, navigate] = useLocation();
-  const placeholder = getPlaceholderCredentials("admin");
+  const placeholders = getPlaceholderCredentialList("admin");
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,9 +36,13 @@ export default function AdminLogin() {
         <div>
           <h1 className="text-2xl font-bold">Admin Login</h1>
           <p className="text-sm text-gray-400 mt-1">Hidden access for internal admin settings.</p>
-          <p className="text-xs text-gray-400 mt-2">
-            Placeholder: {placeholder.email} / {placeholder.password}
-          </p>
+          <div className="text-xs text-gray-400 mt-2 space-y-1">
+            {placeholders.map((placeholder) => (
+              <p key={placeholder.email}>
+                {placeholder.name}: {placeholder.email} / {placeholder.password}
+              </p>
+            ))}
+          </div>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
