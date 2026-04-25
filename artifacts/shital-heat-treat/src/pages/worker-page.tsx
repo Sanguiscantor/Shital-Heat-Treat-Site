@@ -37,7 +37,7 @@ function Tick({ checked }: { checked: boolean }) {
           : "bg-transparent border-[#2B3342] text-gray-500"
       }`}
     >
-      {checked ? "âœ“" : ""}
+      {checked ? "✓" : ""}
     </span>
   );
 }
