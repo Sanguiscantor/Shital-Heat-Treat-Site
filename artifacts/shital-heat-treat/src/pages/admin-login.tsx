@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter, useLogin } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,21 +13,42 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [, navigate] = useLocation();
   const placeholders = getPlaceholderCredentialList("admin");
+  const loginMutation = useLogin();
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loginMutation.isPending) return;
     const session = tryPlaceholderLogin("admin", email, password);
-    if (!session) {
-      toast({
-        title: "Admin sign in failed",
-        description: "Use the configured placeholder admin credentials.",
-        variant: "destructive",
-      });
+    if (session) {
+      saveSession(session.token, session.user);
+      setAuthTokenGetter(() => session.token);
+      navigate("/admin");
       return;
     }
-    saveSession(session.token, session.user);
-    setAuthTokenGetter(() => session.token);
-    navigate("/internal-admin-ops-8");
+
+    try {
+      const response = await loginMutation.mutateAsync({
+        data: { email, password },
+      });
+      if (response.user.role !== "admin") {
+        toast({
+          title: "Admin access required",
+          description: "This account is not allowed to access the admin page.",
+          variant: "destructive",
+        });
+        return;
+      }
+      saveSession(response.token, response.user);
+      setAuthTokenGetter(() => response.token);
+      navigate("/admin");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign in right now.";
+      toast({
+        title: "Admin sign in failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -66,8 +87,8 @@ export default function AdminLogin() {
               placeholder="Enter password"
             />
           </div>
-          <Button type="submit" className="w-full">
-            Sign in as admin
+          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+            {loginMutation.isPending ? "Signing in..." : "Sign in as admin"}
           </Button>
         </form>
 

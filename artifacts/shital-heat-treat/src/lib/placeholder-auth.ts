@@ -49,10 +49,10 @@ const configs: Record<LoginKind, PlaceholderAuthConfig[]> = {
       name: "Director",
     },
     {
-      email: import.meta.env.VITE_PLACEHOLDER_ADMIN_FINANCE_EMAIL ?? "finance.advisor@demo.com",
-      password: import.meta.env.VITE_PLACEHOLDER_ADMIN_FINANCE_PASSWORD ?? "finance1234",
+      email: import.meta.env.VITE_PLACEHOLDER_ADMIN_MARKETING_EMAIL ?? "marketing@demo.com",
+      password: import.meta.env.VITE_PLACEHOLDER_ADMIN_MARKETING_PASSWORD ?? "marketing1234",
       role: "admin",
-      name: "Financial Advisor",
+      name: "Marketing Manager",
     },
     {
       email: import.meta.env.VITE_PLACEHOLDER_ADMIN_PRODUCTION_EMAIL ?? "production.head@demo.com",

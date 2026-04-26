@@ -409,5 +409,43 @@ router.get("/notifications", requireAuth, async (req, res) => {
   res.json({ items });
 });
 
+router.delete(
+  "/work-orders/:id",
+  requireAuth,
+  requireRoles("admin", "operator"),
+  async (req, res) => {
+    const id = firstParam(req.params["id"]);
+    if (!id) {
+      res.status(400).json({ message: "id is required." });
+      return;
+    }
+
+    const workOrder = await db.query.workOrders.findFirst({
+      where: eq(workOrders.id, id),
+    });
+
+    if (!workOrder) {
+      res.status(404).json({ message: "Work order not found." });
+      return;
+    }
+
+    // Delete the work order (cascading delete will handle related records)
+    await db.delete(workOrders).where(eq(workOrders.id, id));
+
+    await db.insert(auditLogs).values({
+      actorUserId: req.auth!.sub,
+      action: "work_order_deleted",
+      entityType: "work_order",
+      entityId: id,
+      detailsJson: JSON.stringify({
+        orderCode: workOrder.orderCode,
+        reason: "Force deleted by operator/admin",
+      }),
+    });
+
+    res.json({ message: "Work order deleted successfully." });
+  },
+);
+
 export default router;
 

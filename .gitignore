@@ -28,6 +28,10 @@ node_modules
 !.vscode/extensions.json
 
 # misc
+*.env
+*.env.*
+!*.env.example
+!**/*.env.example
 /.sass-cache
 /connect.lock
 /coverage
@@ -35,6 +39,7 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+*.log
 /typings
 
 # System Files
@@ -47,3 +52,6 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Supabase local CLI metadata
+supabase/.temp/

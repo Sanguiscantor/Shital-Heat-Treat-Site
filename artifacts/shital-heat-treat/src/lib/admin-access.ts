@@ -13,15 +13,20 @@ const ADMIN_SCOPE_BY_EMAIL: Record<string, AdminPanelScope[]> = {
     "financialData",
     "productionHistory",
   ],
-  "director@demo.com": ["financialData", "productionHistory"],
-  "finance.advisor@demo.com": ["financialData"],
-  "production.head@demo.com": ["productionHistory"],
+  "director@demo.com": [
+    "customerList",
+    "supplierList",
+    "financialData",
+    "productionHistory",
+  ],
+  "marketing@demo.com": ["customerList"],
+  "production.head@demo.com": ["customerList", "productionHistory"],
 };
 
 const ADMIN_TITLE_BY_EMAIL: Record<string, string> = {
   "website.admin@demo.com": "Website Admin",
   "director@demo.com": "Director",
-  "finance.advisor@demo.com": "Financial Advisor",
+  "marketing@demo.com": "Marketing Manager",
   "production.head@demo.com": "Production Head",
 };
 

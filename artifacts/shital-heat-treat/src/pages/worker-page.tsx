@@ -55,6 +55,7 @@ export default function WorkerPage() {
   );
   const [stageNotes, setStageNotes] = useState<Record<string, string>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const rowsRef = useRef(rows);
   const archivedRowsRef = useRef(archivedRows);
   const notificationEventsRef = useRef(notificationEvents);
@@ -269,85 +270,110 @@ export default function WorkerPage() {
     setHasUnsavedChanges(true);
   };
 
+  const deleteRow = (rowId: string) => {
+    if (confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
+      setRows((currentRows) => currentRows.filter((row) => row.id !== rowId));
+      setHasUnsavedChanges(true);
+    }
+  };
+
+  const deleteArchivedRow = (rowId: string) => {
+    if (confirm("Are you sure you want to permanently delete this archived job?")) {
+      setArchivedRows((currentRows) => currentRows.filter((row) => row.id !== rowId));
+      setHasUnsavedChanges(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0A0D14] text-gray-100 p-6 md:p-10">
       <div className="max-w-[1800px] mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold">Worker Page</h1>
         <p className="text-sm text-gray-400 mt-1 mb-6">
-          Factory-floor tracker with live heat-treatment stage progression.
+          Factory-floor tracker with live vacuum heat-treatment stage progression.
         </p>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-3">
           <button
             type="button"
-            className="h-10 px-4 border border-[#1A202C] bg-[#111827] text-white"
+            className="h-10 px-4 border border-[#1A202C] bg-[#111827] text-white hover:bg-[#1A202C] transition-colors"
             onClick={addNewJob}
           >
             Add New Job
           </button>
-          <p className="text-xs text-gray-400">
-            Archived dispatched jobs: <span className="text-white">{archivedRows.length}</span>
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
-            <p className="text-gray-400">Total jobs</p>
-            <p className="text-xl font-semibold">{summary.total}</p>
-          </div>
-          <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
-            <p className="text-gray-400">In process</p>
-            <p className="text-xl font-semibold">{summary.inProcess}</p>
-          </div>
-          <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
-            <p className="text-gray-400">Ready dispatch</p>
-            <p className="text-xl font-semibold">{summary.dispatchReady}</p>
-          </div>
-          <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
-            <p className="text-gray-400">Dispatched</p>
-            <p className="text-xl font-semibold">{summary.dispatched}</p>
-          </div>
+          <button
+            type="button"
+            className={`h-10 px-4 border transition-colors ${
+              showArchived
+                ? "border-[#F39200] bg-[#F39200]/20 text-[#F39200]"
+                : "border-[#1A202C] bg-[#111827] text-gray-300 hover:bg-[#1A202C]"
+            }`}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? "✓" : "○"} Archived Jobs ({archivedRows.length})
+          </button>
         </div>
 
-        <div className="border border-[#1A202C] bg-[#0D111A]">
-          <table className="w-full text-xs md:text-sm table-fixed">
-            <thead className="bg-[#121826]">
-              <tr>
-                <th className="text-left p-2 md:p-3 w-[32%]">Details</th>
-                <th className="text-left p-2 md:p-3 w-[8%]">Initial Insp.</th>
-                <th className="text-left p-2 md:p-3 w-[7%]">Stress</th>
-                <th className="text-left p-2 md:p-3 w-[7%]">Hardening</th>
-                <th className="text-left p-2 md:p-3 w-[7%]">Temper</th>
-                <th className="text-left p-2 md:p-3 w-[8%]">Final Insp.</th>
-                <th className="text-left p-2 md:p-3 w-[10%]">Stage</th>
-                <th className="text-left p-2 md:p-3 w-[13%]">Remarks / Note</th>
-                <th className="text-left p-2 md:p-3 w-[8%]">Submit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-[#1A202C]">
-                  {(() => {
-                    const missingRemarksForNotOk =
-                      row.finalInspection === "not_ok" && row.remarks.trim().length === 0;
-                    const submitEnabled =
-                      row.finalInspection === "ok" ||
-                      (row.finalInspection === "not_ok" && row.remarks.trim().length > 0);
-                    return (
-                      <>
-                  <td className="p-2 md:p-3">
-                    <div className="space-y-1">
-                      <label className="block text-[11px] text-gray-400">Customer Name / Batch No.</label>
-                      <input
-                        className="w-full h-8 bg-[#0A0D14] border border-[#1A202C] px-2 text-xs"
-                        value={row.name}
-                        onChange={(event) => updateRow(row.id, "name", event.target.value)}
-                      />
-                      <div className="grid grid-cols-3 gap-1">
-                        <label className="text-[11px] text-gray-400">
-                          Job Type
+        {!showArchived && (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
+                <p className="text-gray-400">Total jobs</p>
+                <p className="text-xl font-semibold">{summary.total}</p>
+              </div>
+              <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
+                <p className="text-gray-400">In process</p>
+                <p className="text-xl font-semibold">{summary.inProcess}</p>
+              </div>
+              <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
+                <p className="text-gray-400">Ready dispatch</p>
+                <p className="text-xl font-semibold">{summary.dispatchReady}</p>
+              </div>
+              <div className="border border-[#1A202C] bg-[#0D111A] p-3 text-sm">
+                <p className="text-gray-400">Dispatched</p>
+                <p className="text-xl font-semibold">{summary.dispatched}</p>
+              </div>
+            </div>
+
+            <div className="border border-[#1A202C] bg-[#0D111A]">
+              <table className="w-full text-xs md:text-sm table-fixed">
+                <thead className="bg-[#121826]">
+                  <tr>
+                    <th className="text-left p-2 md:p-3 w-[30%]">Details</th>
+                    <th className="text-left p-2 md:p-3 w-[8%]">Initial Insp.</th>
+                    <th className="text-left p-2 md:p-3 w-[7%]">Stress</th>
+                    <th className="text-left p-2 md:p-3 w-[7%]">Hardening</th>
+                    <th className="text-left p-2 md:p-3 w-[7%]">Temper</th>
+                    <th className="text-left p-2 md:p-3 w-[8%]">Final Insp.</th>
+                    <th className="text-left p-2 md:p-3 w-[10%]">Stage</th>
+                    <th className="text-left p-2 md:p-3 w-[12%]">Remarks / Note</th>
+                    <th className="text-left p-2 md:p-3 w-[6%]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id} className="border-t border-[#1A202C]">
+                      {(() => {
+                        const missingRemarksForNotOk =
+                          row.finalInspection === "not_ok" && row.remarks.trim().length === 0;
+                        const submitEnabled =
+                          row.finalInspection === "ok" ||
+                          (row.finalInspection === "not_ok" && row.remarks.trim().length > 0);
+                        return (
+                          <>
+                      <td className="p-2 md:p-3">
+                        <div className="space-y-1">
+                          <label className="block text-[11px] text-gray-400">Customer Name / Batch No.</label>
                           <input
-                            className="w-full h-8 mt-1 bg-[#0A0D14] border border-[#1A202C] px-2 text-xs"
-                            value={row.jobType}
-                            onChange={(event) => updateRow(row.id, "jobType", event.target.value)}
+                            className="w-full h-8 bg-[#0A0D14] border border-[#1A202C] px-2 text-xs"
+                            value={row.name}
+                            onChange={(event) => updateRow(row.id, "name", event.target.value)}
+                          />
+                          <div className="grid grid-cols-3 gap-1">
+                            <label className="text-[11px] text-gray-400">
+                              Job Type
+                              <input
+                                className="w-full h-8 mt-1 bg-[#0A0D14] border border-[#1A202C] px-2 text-xs"
+                                value={row.jobType}
+                                onChange={(event) => updateRow(row.id, "jobType", event.target.value)}
                             placeholder="Job type"
                           />
                         </label>
@@ -514,14 +540,23 @@ export default function WorkerPage() {
                     )}
                   </td>
                   <td className="p-2 md:p-3 align-top">
-                    <button
-                      type="button"
-                      className="h-9 px-2 w-full border border-[#1A202C] bg-[#111827] text-white disabled:opacity-50"
-                      onClick={() => submitRow(row.id)}
-                      disabled={!submitEnabled}
-                    >
-                      Submit
-                    </button>
+                    <div className="flex gap-1 flex-col">
+                      <button
+                        type="button"
+                        className="h-8 px-2 w-full border border-[#1A202C] bg-[#111827] text-white disabled:opacity-50 hover:bg-[#1A202C] transition-colors"
+                        onClick={() => submitRow(row.id)}
+                        disabled={!submitEnabled}
+                      >
+                        Submit
+                      </button>
+                      <button
+                        type="button"
+                        className="h-8 px-2 w-full border border-red-900/50 bg-red-950/30 text-red-300 hover:bg-red-950/50 transition-colors text-xs"
+                        onClick={() => deleteRow(row.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                       </>
                     );
@@ -531,6 +566,72 @@ export default function WorkerPage() {
             </tbody>
           </table>
         </div>
+          </>
+        )}
+
+        {showArchived && (
+          <div>
+            <h2 className="text-xl font-bold mb-4">Archived Jobs</h2>
+            {archivedRows.length === 0 ? (
+              <div className="border border-[#1A202C] bg-[#0D111A] p-8 text-center">
+                <p className="text-gray-400">No archived jobs yet.</p>
+              </div>
+            ) : (
+              <div className="border border-[#1A202C] bg-[#0D111A] overflow-x-auto">
+                <table className="w-full text-xs md:text-sm">
+                  <thead className="bg-[#121826]">
+                    <tr>
+                      <th className="text-left p-3">Job Name</th>
+                      <th className="text-left p-3">Customer</th>
+                      <th className="text-left p-3">Job Type</th>
+                      <th className="text-left p-3">Material</th>
+                      <th className="text-left p-3">Final Status</th>
+                      <th className="text-left p-3">Dispatched Date</th>
+                      <th className="text-left p-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedRows.map((row) => (
+                      <tr key={row.id} className="border-t border-[#1A202C]">
+                        <td className="p-3">{row.name}</td>
+                        <td className="p-3">{row.customerName}</td>
+                        <td className="p-3">{row.jobType}</td>
+                        <td className="p-3">{row.materialClass}</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${
+                              row.finalInspection === "ok"
+                                ? "bg-green-500/20 text-green-300"
+                                : "bg-red-500/20 text-red-300"
+                            }`}
+                          >
+                            {row.finalInspection === "ok" ? "✓ OK" : "✗ Not OK"}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          {row.stageHistory.find((h) => h.stage === "dispatched")?.timestamp
+                            ? new Date(
+                                row.stageHistory.find((h) => h.stage === "dispatched")!.timestamp
+                              ).toLocaleDateString()
+                            : "N/A"}
+                        </td>
+                        <td className="p-3">
+                          <button
+                            type="button"
+                            className="h-7 px-2 border border-red-900/50 bg-red-950/30 text-red-300 hover:bg-red-950/50 transition-colors text-xs"
+                            onClick={() => deleteArchivedRow(row.id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

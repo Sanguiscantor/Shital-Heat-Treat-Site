@@ -8,6 +8,10 @@ import Login from "@/pages/login";
 import WorkerPage from "@/pages/worker-page";
 import ClientPortal from "@/pages/client-portal";
 import AdminPage from "@/pages/admin-page";
+import AdminCustomers from "@/pages/admin-customers";
+import AdminProduction from "@/pages/admin-production";
+import AdminFinancial from "@/pages/admin-financial";
+import AdminSuppliers from "@/pages/admin-suppliers";
 import WorkerLogin from "@/pages/worker-login";
 import AdminLogin from "@/pages/admin-login";
 import { getSessionToken } from "@/lib/auth-session";
@@ -24,7 +28,11 @@ function Router() {
       <Route path="/worker" component={WorkerPage} />
       <Route path="/client-portal" component={ClientPortal} />
       <Route path="/admin-login" component={AdminLogin} />
-      <Route path="/internal-admin-ops-8" component={AdminPage} />
+      <Route path="/admin" component={AdminPage} />
+      <Route path="/admin/customers" component={AdminCustomers} />
+      <Route path="/admin/production" component={AdminProduction} />
+      <Route path="/admin/financial" component={AdminFinancial} />
+      <Route path="/admin/suppliers" component={AdminSuppliers} />
       <Route component={NotFound} />
     </Switch>
   );

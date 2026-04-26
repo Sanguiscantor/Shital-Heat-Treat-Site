@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter, useLogin } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,22 +13,42 @@ export default function WorkerLogin() {
   const [password, setPassword] = useState("");
   const [, navigate] = useLocation();
   const placeholder = getPlaceholderCredentials("worker");
+  const loginMutation = useLogin();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password || loginMutation.isPending) return;
     const session = tryPlaceholderLogin("worker", email, password);
-    if (!session) {
-      toast({
-        title: "Sign in failed",
-        description: "Use the configured placeholder worker credentials.",
-        variant: "destructive",
-      });
+    if (session) {
+      saveSession(session.token, session.user);
+      setAuthTokenGetter(() => session.token);
+      navigate("/worker");
       return;
     }
-    saveSession(session.token, session.user);
-    setAuthTokenGetter(() => session.token);
-    navigate("/worker");
+
+    try {
+      const response = await loginMutation.mutateAsync({
+        data: { email, password },
+      });
+      if (response.user.role !== "operator" && response.user.role !== "admin") {
+        toast({
+          title: "Worker access required",
+          description: "This account is not allowed to access the worker page.",
+          variant: "destructive",
+        });
+        return;
+      }
+      saveSession(response.token, response.user);
+      setAuthTokenGetter(() => response.token);
+      navigate("/worker");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign in right now.";
+      toast({
+        title: "Sign in failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -65,8 +85,8 @@ export default function WorkerLogin() {
               placeholder="Enter password"
             />
           </div>
-          <Button type="submit" className="w-full">
-            Sign in as worker
+          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+            {loginMutation.isPending ? "Signing in..." : "Sign in as worker"}
           </Button>
         </form>
 
